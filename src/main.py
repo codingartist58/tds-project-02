@@ -1,28 +1,26 @@
+from fastapi import FastAPI, Request, UploadFile
 import os
 import shutil
-from typing import List, Optional
-from fastapi import FastAPI, File, UploadFile
-from fastapi.responses import JSONResponse
-#from utils.agent_controller import process_task
-
-import uvicorn
 
 app = FastAPI()
 
 INCOMING_DIR = "incoming"
-os.makedirs(INCOMING_DIR, exist_ok=True)  # create folder if it doesn't exist
+os.makedirs(INCOMING_DIR, exist_ok=True)
 
 @app.post("/api/")
-async def analyze_task(files: List[UploadFile] = File(...)):
-    # Save the required questions.txt file
-    for file in files:
-        file_path = os.path.join(INCOMING_DIR, file.filename)
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+async def analyze_task(request: Request):
+    form = await request.form()
 
-    # Save any additional files
-    
-    return {"message": "Files saved to incoming/"}
+    for field_name, file in form.items():
+        if isinstance(file, UploadFile):
+            save_path = os.path.join("incoming", file.filename)
+            os.makedirs("incoming", exist_ok=True)
+            with open(save_path, "wb") as buffer:
+                shutil.copyfileobj(file.file, buffer)
+            print(f"Saved {file.filename} (field: {field_name})")
+
+    return {"message": "Files saved"}
+
 
 if __name__ == "__main__":
     import uvicorn
