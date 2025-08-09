@@ -1,6 +1,10 @@
-from fastapi import FastAPI, Request, UploadFile
+from fastapi import FastAPI, Request
+from starlette.datastructures import UploadFile
+import logging
 import os
 import shutil
+
+from utils.ai import process_questions
 
 app = FastAPI()
 
@@ -11,15 +15,34 @@ os.makedirs(INCOMING_DIR, exist_ok=True)
 async def analyze_task(request: Request):
     form = await request.form()
 
-    for field_name, file in form.items():
-        if isinstance(file, UploadFile):
-            save_path = os.path.join("incoming", file.filename)
-            os.makedirs("incoming", exist_ok=True)
-            with open(save_path, "wb") as buffer:
-                shutil.copyfileobj(file.file, buffer)
-            print(f"Saved {file.filename} (field: {field_name})")
+    questions_text = None
+    saved_files = []
 
-    return {"message": "Files saved"}
+    for field_name, value in form.items():
+        if hasattr(value, "filename") and hasattr(value, "file"):
+            file_path = os.path.join(INCOMING_DIR, value.filename)
+            with open(file_path, "wb") as buffer:
+                shutil.copyfileobj(value.file, buffer)
+            saved_files.append(file_path)
+
+            if value.filename == "questions.txt":
+                with open(file_path, "r", encoding="utf-8") as f:
+                    questions_text = f.read()
+
+    if not questions_text:
+        return {"error": "questions.txt is required"}
+    
+    print(f"----------sending llm {questions_text}")
+    llm_response = process_questions(questions_text)
+
+    response_path = os.path.join(INCOMING_DIR, "response.txt")
+    with open(response_path, "w", encoding="utf-8") as f:
+        f.write(llm_response)
+
+    return {
+        "message": "Files saved and processed",
+        "llm_response": llm_response
+    }
 
 
 if __name__ == "__main__":

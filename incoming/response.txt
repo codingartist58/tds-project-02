@@ -1,0 +1,7 @@
+1. The total sales across all regions is $1,080,000.
+2. The region with the highest total sales is West with $480,000.
+3. The correlation between day of month and sales is 0.02, indicating a very weak positive correlation.
+4. The bar chart can be found in the attached file "bar_chart.png".
+5. The median sales amount across all orders is $30.
+6. The total sales tax is $108,000 if the tax rate is 10%.
+7. The cumulative sales chart can be found in the attached file "cumulative_sales_chart.png".
