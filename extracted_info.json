@@ -1,0 +1,72 @@
+{
+    "urls": [],
+    "questions": [
+        "- `bar_chart`: base64 PNG string under 100kB",
+        "- `cumulative_sales_chart`: base64 PNG string under 100kB",
+        "- `day_sales_correlation`: number",
+        "- `median_sales`: number",
+        "- `top_region`: string",
+        "- `total_sales_tax`: number",
+        "- `total_sales`: number",
+        "1. What is the total sales across all regions?",
+        "2. Which region has the highest total sales?",
+        "3. What is the correlation between day of month and sales? (Use the date column.)",
+        "4. Plot total sales by region as a bar chart with blue bars. Encode as base64 PNG.",
+        "5. What is the median sales amount across all orders?",
+        "6. What is the total sales tax if the tax rate is 10%?",
+        "7. Plot cumulative sales over time as a line chart with a red line. Encode as base64 PNG.",
+        "Analyze `sample-sales.csv`.",
+        "Answer:",
+        "Return a JSON object with keys:"
+    ],
+    "csvdata": [
+        {
+            "order_id": "1",
+            "date": "2024-01-01",
+            "region": "East",
+            "sales": "100"
+        },
+        {
+            "order_id": "2",
+            "date": "2024-01-02",
+            "region": "West",
+            "sales": "200"
+        },
+        {
+            "order_id": "3",
+            "date": "2024-01-03",
+            "region": "East",
+            "sales": "150"
+        },
+        {
+            "order_id": "4",
+            "date": "2024-01-04",
+            "region": "North",
+            "sales": "50"
+        },
+        {
+            "order_id": "5",
+            "date": "2024-01-05",
+            "region": "South",
+            "sales": "120"
+        },
+        {
+            "order_id": "6",
+            "date": "2024-01-06",
+            "region": "West",
+            "sales": "220"
+        },
+        {
+            "order_id": "7",
+            "date": "2024-01-07",
+            "region": "East",
+            "sales": "130"
+        },
+        {
+            "order_id": "8",
+            "date": "2024-01-08",
+            "region": "South",
+            "sales": "170"
+        }
+    ]
+}

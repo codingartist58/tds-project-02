@@ -11,7 +11,7 @@ AIPIPE_BASE_URL = os.getenv("AIPIPE_BASE_URL")
 if not AIPIPE_TOKEN or not AIPIPE_BASE_URL:
     raise ValueError("Missing AIPIPE_TOKEN or AIPIPE_BASE_URL in environment variables")
 
-def process_questions(questions_text: str) -> str:
+def process_questions(questions_text: str, context_data: dict ) -> str:
     """Send the questions text to AIpipe and return its response."""
     
     url = f"{AIPIPE_BASE_URL.rstrip('/')}/completions"
@@ -23,7 +23,7 @@ def process_questions(questions_text: str) -> str:
 
     payload = {
         "model": "gpt-3.5-turbo-instruct",  # completions model
-        "prompt": f"You are a helpful data analyst. Answer these questions:\n\n{questions_text}",
+        "prompt": f"You are a helpful data analyst. Answer these questions in {questions_text}. Use the urls, if present in json data {context_data} for scraping and use that data. use the csv data, if present, to answer the questions .In the if urls :\n\n. Respond in the format mentioned in {questions_text}",
         "max_tokens": 500,
         "temperature": 0
     }
