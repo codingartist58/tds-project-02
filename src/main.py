@@ -129,9 +129,7 @@ async def analyze_task(request: Request):
     with open(response_path, "w", encoding="utf-8") as f:
         f.write(llm_response)
 
-    response_path = os.path.join(INCOMING_DIR, "response.txt")
-    with open(response_path, "w", encoding="utf-8") as f:
-        f.write(llm_response)
+
 
     return {
         "message": "Files saved and processed",
