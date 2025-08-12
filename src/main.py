@@ -1,3 +1,4 @@
+from datetime import datetime
 import re
 from typing import Dict, List, Any
 from fastapi import FastAPI, Request
@@ -10,10 +11,13 @@ import csv
 
 from utils.ai import process_questions
 
+
+
 app = FastAPI()
 
 INCOMING_DIR = "incoming"
-os.makedirs(INCOMING_DIR, exist_ok=True)
+QUESTIONS_DIR = os.path.join(INCOMING_DIR, "questions")
+os.makedirs(QUESTIONS_DIR, exist_ok=True)
 
 def extract_urls(text: str) -> List[str]:
     """Extract URLs from a given text."""
@@ -65,6 +69,16 @@ async def analyze_task(request: Request):
                 with open(file_path, "r", encoding="utf-8") as f:
                     questions_text = f.read()
 
+
+                # Save questions into /incoming/questions/ with timestamp
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                questions_copy_path = os.path.join(
+                    QUESTIONS_DIR,
+                    f"questions_{timestamp}.txt"
+                )
+                with open(questions_copy_path, "w", encoding="utf-8") as f:
+                    f.write(questions_text)
+
     if not questions_text:
         return {"error": "questions.txt is required"}
     
@@ -74,6 +88,14 @@ async def analyze_task(request: Request):
 
     print(f"----------sending llm {questions_text}")
     llm_response = process_questions(questions_text, extracted_data)
+
+    # Save LLM response in /incoming/questions/ with matching timestamp
+    response_path = os.path.join(
+        QUESTIONS_DIR,
+        f"response_{timestamp}.txt"
+    )
+    with open(response_path, "w", encoding="utf-8") as f:
+        f.write(llm_response)
 
     response_path = os.path.join(INCOMING_DIR, "response.txt")
     with open(response_path, "w", encoding="utf-8") as f:

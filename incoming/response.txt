@@ -1,9 +1,10 @@
 {
-    "total_sales": 990,
-    "top_region": "West",
-    "day_sales_correlation": 0.2,
-    "bar_chart": "base64 PNG string",
-    "median_sales": 135,
-    "total_sales_tax": 99,
-    "cumulative_sales_chart": "base64 PNG string"
-}
+  "urls": [
+    "https://en.wikipedia.org/wiki/List_of_highest-grossing_films"
+  ],
+  "csvdata": [],
+  "answers": [
+    "3",
+    "Avatar",
+    "0.999",
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASwAAAEsCAYAAAB5fY51AAAgAElEQVR4Xu3dCZQd1ZnH8c+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9+9
