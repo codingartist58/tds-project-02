@@ -50,8 +50,8 @@ def process_incoming_files(saved_files: List[str], questions_text: str) -> Dict[
     extracted_data = {
         #"url_contents": "",
         "urls": [],
-        "questions": questions_text,
-        "csvdata": []
+        "csvdata": [],
+        "text": ""
     }
     urls = extract_urls(questions_text) if questions_text else []
     #extracted_data["url_contents"] += content + "\n" if content else 
@@ -66,8 +66,11 @@ def process_incoming_files(saved_files: List[str], questions_text: str) -> Dict[
     extracted_data["urls"] = urls
 
     for file_path in saved_files:
-        if file_path.endswith(".csv"):
+        # handling csv files
+        if file_path.lower().endswith(".csv"):
             extracted_data["csvdata"].extend(extract_csv(file_path))
+
+
         # Later: Add handlers for images, PDFs, etc.
 
     return extracted_data

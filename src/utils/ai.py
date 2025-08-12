@@ -21,9 +21,37 @@ def process_questions(questions_text: str, context_data: dict ) -> str:
         "Content-Type": "application/json"
     }
 
+    
     payload = {
         "model": "gpt-3.5-turbo-instruct",  # completions model
-        "prompt": f"You are a helpful data analyst. Answer these questions in {questions_text}. Use the urls, if present in json data {context_data} for scraping and use that data. use the csv data, if present, to answer the questions . Respond in the format mentioned in {questions_text}",
+        "prompt": f"""You are a highly skilled data analyst AI.
+    Your task is to answer the user’s questions present in {questions_text} using all available data sources:
+
+    URLs: If URLs are present in {context_data["urls"]}, scrape their content and use it.
+
+    CSV Data: Parse and use any CSV data in {context_data["csvdata"]} for analysis.
+
+    Other Files: Extract any useful data from other keys in {context_data} supported file types.
+
+    Always reason step-by-step, perform necessary calculations, and provide concise, factual answers from the context_data and questions_text only. Response should be in format mentioned in {questions_text}.
+    
+    If the user’s question requires a chart or graph:
+
+    Analyze the provided data (CSV, scraped, or other) to get the actual values.
+
+    Generate Python code that uses matplotlib (preferred) or plotly to plot the graph.
+
+    Ensure the chart matches the description exactly:
+
+        Correct type (bar, line, scatter, histogram, pie, etc.).
+
+        Correct labels, title, colors, and legends as described.
+
+        Scales, ticks, and units match the dataset.
+
+    Output only the Python code block, no explanations.
+
+    Do not hallucinate data — if data is missing, clearly indicate that in a comment in the code.  """,
         "max_tokens": 2000,
         "temperature": 0
     }
