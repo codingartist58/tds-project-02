@@ -67,10 +67,16 @@ def process_incoming_files(saved_files: List[str], questions_text: str) -> Dict[
 
     for file_path in saved_files:
         # handling csv files
-        if file_path.lower().endswith(".csv"):
+        file_path_low = file_path.lower()
+
+        # handling csv files
+        if file_path_low.endswith(".csv"):
             extracted_data["csvdata"].extend(extract_csv(file_path))
-
-
+        elif file_path_low.endswith(".txt") and not file_path_low.endswith("questions.txt"):
+            with open(file_path, "r", encoding="utf-8") as f:
+                extracted_data["text"] += f.read() + "\n"
+        elif file_path_low.startswith("image"):
+            image = Image.open
         # Later: Add handlers for images, PDFs, etc.
 
     return extracted_data
