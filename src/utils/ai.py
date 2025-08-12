@@ -23,8 +23,8 @@ def process_questions(questions_text: str, context_data: dict ) -> str:
 
     payload = {
         "model": "gpt-3.5-turbo-instruct",  # completions model
-        "prompt": f"You are a helpful data analyst. Answer these questions in {questions_text}. Use the urls, if present in json data {context_data} for scraping and use that data. use the csv data, if present, to answer the questions .In the if urls :\n\n. Respond in the format mentioned in {questions_text}",
-        "max_tokens": 500,
+        "prompt": f"You are a helpful data analyst. Answer these questions in {questions_text}. Use the urls, if present in json data {context_data} for scraping and use that data. use the csv data, if present, to answer the questions . Respond in the format mentioned in {questions_text}",
+        "max_tokens": 2000,
         "temperature": 0
     }
 

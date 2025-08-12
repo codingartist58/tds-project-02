@@ -6,6 +6,12 @@ uvicorn utils.main:app --port 8020 --reload
 
 ## curl command
 
+movies data
+curl -X POST "http://localhost:8020/api/" \
+  -F "file1=@questions.txt" \
+  -F "file2=@movies.csv"
+
+
 sales data
 curl "http://localhost:8020/api/" -F "questions.txt=@questions.txt" -F "sales-data.csv=@sample-sales.csv"
 

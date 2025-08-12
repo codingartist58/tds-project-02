@@ -2,11 +2,13 @@ from datetime import datetime
 import re
 from typing import Dict, List, Any
 from fastapi import FastAPI, Request
-from starlette.datastructures import UploadFile
+#from starlette.datastructures import UploadFile
 import logging
 import os
 import shutil
 import csv
+import requests
+from bs4 import BeautifulSoup
 
 
 from utils.ai import process_questions
@@ -24,6 +26,16 @@ def extract_urls(text: str) -> List[str]:
     url_pattern = r'https?://\S+'
     return re.findall(url_pattern, text)
 
+def scrape_url(url: str):
+    try:
+        resp = requests.get(url, timeout=10)
+        resp.raise_for_status()
+        soup = BeautifulSoup(resp.text, "html.parser")
+        # Extract visible text
+        return soup.get_text(separator="\n", strip=True)
+    except Exception as e:
+        return None
+
 def extract_csv(file_path: str) -> List[Dict[str, Any]]:
     """Read CSV file and return a list of dictionaries."""
     data = []
@@ -35,18 +47,30 @@ def extract_csv(file_path: str) -> List[Dict[str, Any]]:
 
 def process_incoming_files(saved_files: List[str], questions_text: str) -> Dict[str, Any]:
     """Process all saved files and return structured JSON."""
+    extracted_data = {
+        #"url_contents": "",
+        "urls": [],
+        "questions": questions_text,
+        "csvdata": []
+    }
     urls = extract_urls(questions_text) if questions_text else []
-    csv_data = []
+    #extracted_data["url_contents"] += content + "\n" if content else 
+    # If URLs found, scrape them
+    
+    """     
+        if len(urls) != 0:
+        for url in urls:
+            content = scrape_url(url)
+            extracted_data["url_contents"] += content + "\n" if content else """
+    
+    extracted_data["urls"] = urls
 
     for file_path in saved_files:
         if file_path.endswith(".csv"):
-            csv_data.extend(extract_csv(file_path))
+            extracted_data["csvdata"].extend(extract_csv(file_path))
         # Later: Add handlers for images, PDFs, etc.
 
-    return {
-        "urls": urls,
-        "csvdata": csv_data
-    }
+    return extracted_data
 
 
 
@@ -60,7 +84,14 @@ async def analyze_task(request: Request):
 
     for field_name, value in form.items():
         if hasattr(value, "filename") and hasattr(value, "file"):
-            file_path = os.path.join(INCOMING_DIR, value.filename)
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+            # Save incoming files with timestamp
+            base, ext = os.path.splitext(value.filename)
+            new_filename = f"{base}_{timestamp}{ext}"
+
+            file_path = os.path.join(INCOMING_DIR, new_filename)
+
             with open(file_path, "wb") as buffer:
                 shutil.copyfileobj(value.file, buffer)
             saved_files.append(file_path)
@@ -71,7 +102,7 @@ async def analyze_task(request: Request):
 
 
                 # Save questions into /incoming/questions/ with timestamp
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                #timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                 questions_copy_path = os.path.join(
                     QUESTIONS_DIR,
                     f"questions_{timestamp}.txt"
@@ -84,9 +115,10 @@ async def analyze_task(request: Request):
     
     # Process files into JSON
     extracted_data = process_incoming_files(saved_files, questions_text)
-
+    print(f"---[EXTRACTED]Extracted data: {extracted_data}")
 
     print(f"----------sending llm {questions_text}")
+    
     llm_response = process_questions(questions_text, extracted_data)
 
     # Save LLM response in /incoming/questions/ with matching timestamp
