@@ -1,0 +1,57 @@
+import matplotlib.pyplot as plt
+import base64
+import pandas as pd
+import numpy as np
+
+# Load data from CSV
+df = pd.read_csv('sample-sales.csv')
+
+# Calculate total sales
+total_sales = df['sales'].sum()
+
+# Calculate top region
+top_region = df.groupby('region')['sales'].sum().idxmax()
+
+# Calculate correlation between day of month and sales
+day_sales_correlation = df['date'].dt.day.corr(df['sales'])
+
+# Plot total sales by region as a bar chart with blue bars
+plt.bar(df['region'], df['sales'], color='blue')
+plt.xlabel('Region')
+plt.ylabel('Total Sales')
+plt.title('Total Sales by Region')
+plt.savefig('bar_chart.png')
+
+# Encode bar chart as base64 PNG
+with open('bar_chart.png', 'rb') as image:
+    bar_chart = base64.b64encode(image.read())
+
+# Calculate median sales
+median_sales = df['sales'].median()
+
+# Calculate total sales tax
+total_sales_tax = df['sales'].sum() * 0.1
+
+# Plot cumulative sales over time as a line chart with a red line
+plt.plot(df['date'], df['sales'], color='red')
+plt.xlabel('Date')
+plt.ylabel('Cumulative Sales')
+plt.title('Cumulative Sales over Time')
+plt.savefig('cumulative_sales_chart.png')
+
+# Encode cumulative sales chart as base64 PNG
+with open('cumulative_sales_chart.png', 'rb') as image:
+    cumulative_sales_chart = base64.b64encode(image.read())
+
+# Output JSON object
+output = {
+    'total_sales': total_sales,
+    'top_region': top_region,
+    'day_sales_correlation': day_sales_correlation,
+    'bar_chart': bar_chart,
+    'median_sales': median_sales,
+    'total_sales_tax': total_sales_tax,
+    'cumulative_sales_chart': cumulative_sales_chart
+}
+
+print(output)

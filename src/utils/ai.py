@@ -33,8 +33,8 @@ def process_questions(questions_text: str, context_data: dict ) -> str:
 
     Other Files: Extract any useful data from other keys in {context_data} supported file types.
 
-    Always reason step-by-step, perform necessary calculations, and provide concise, factual answers from the context_data and questions_text only. Response should be in format mentioned in {questions_text}.
-    
+    Always reason step-by-step, perform necessary calculations, and provide concise, factual answers from the context_data and questions_text only. Response should be in format mentioned in {questions_text}. Always provide the output as a json object with the property name based on the conditions below:
+    Python code for plots go under a `plot` property.
     If the user’s question requires a chart or graph:
 
     Analyze the provided data (CSV, scraped, or other) to get the actual values.
@@ -49,7 +49,7 @@ def process_questions(questions_text: str, context_data: dict ) -> str:
 
         Scales, ticks, and units match the dataset.
 
-    Output only the Python code block, no explanations.
+    Output the Python code block inside a `plot` property.
 
     Do not hallucinate data — if data is missing, clearly indicate that in a comment in the code.  """,
         "max_tokens": 2000,

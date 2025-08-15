@@ -1,0 +1,36 @@
+# Import necessary libraries
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Load CSV data
+data = [{'order_id': '1', 'date': '2024-01-01', 'region': 'East', 'sales': '100'}, {'order_id': '2', 'date': '2024-01-02', 'region': 'West', 'sales': '200'}, {'order_id': '3', 'date': '2024-01-03', 'region': 'East', 'sales': '150'}, {'order_id': '4', 'date': '2024-01-04', 'region': 'North', 'sales': '50'}, {'order_id': '5', 'date': '2024-01-05', 'region': 'South', 'sales': '120'}, {'order_id': '6', 'date': '2024-01-06', 'region': 'West', 'sales': '220'}, {'order_id': '7', 'date': '2024-01-07', 'region': 'East', 'sales': '130'}, {'order_id': '8', 'date': '2024-01-08', 'region': 'South', 'sales': '170'}]
+df = pd.DataFrame(data)
+
+# Calculate total sales across all regions
+total_sales = df['sales'].sum()
+
+# Find region with highest total sales
+top_region = df.groupby('region')['sales'].sum().idxmax()
+
+# Calculate correlation between day of month and sales
+day_sales_correlation = df['date'].dt.day.corr(df['sales'])
+
+# Plot total sales by region as a bar chart with blue bars
+plt.bar(df['region'], df['sales'], color='blue')
+plt.xlabel('Region')
+plt.ylabel('Total Sales')
+plt.title('Total Sales by Region')
+plt.show()
+
+# Calculate median sales amount across all orders
+median_sales = df['sales'].median()
+
+# Calculate total sales tax if tax rate is 10%
+total_sales_tax = total_sales * 0.1
+
+# Plot cumulative sales over time as a line chart with a red line
+plt.plot(df['date'], df['sales'], color='red')
+plt.xlabel('Date')
+plt.ylabel('Cumulative Sales')
+plt.title('Cumulative Sales over Time')
+plt.show()

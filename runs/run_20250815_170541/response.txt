@@ -1,0 +1,9 @@
+{
+    "total_sales": 990,
+    "top_region": "West",
+    "day_sales_correlation": 0.2,
+    "bar_chart": "base64 PNG string under 100kB",
+    "median_sales": 135,
+    "total_sales_tax": 99,
+    "cumulative_sales_chart": "base64 PNG string under 100kB"
+}

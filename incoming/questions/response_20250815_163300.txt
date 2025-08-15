@@ -1,0 +1,76 @@
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Get data from CSV
+data = [{'order_id': '1', 'date': '2024-01-01', 'region': 'East', 'sales': '100'}, {'order_id': '2', 'date': '2024-01-02', 'region': 'West', 'sales': '200'}, {'order_id': '3', 'date': '2024-01-03', 'region': 'East', 'sales': '150'}, {'order_id': '4', 'date': '2024-01-04', 'region': 'North', 'sales': '50'}, {'order_id': '5', 'date': '2024-01-05', 'region': 'South', 'sales': '120'}, {'order_id': '6', 'date': '2024-01-06', 'region': 'West', 'sales': '220'}, {'order_id': '7', 'date': '2024-01-07', 'region': 'East', 'sales': '130'}, {'order_id': '8', 'date': '2024-01-08', 'region': 'South', 'sales': '170'}]
+
+# Convert sales data to numpy array
+sales = np.array([int(d['sales']) for d in data])
+
+# Calculate total sales
+total_sales = np.sum(sales)
+
+# Calculate median sales
+median_sales = np.median(sales)
+
+# Calculate total sales tax
+total_sales_tax = total_sales * 0.1
+
+# Get list of regions
+regions = [d['region'] for d in data]
+
+# Get unique regions
+unique_regions = list(set(regions))
+
+# Calculate total sales for each region
+region_sales = [np.sum(sales[regions == r]) for r in unique_regions]
+
+# Get index of region with highest sales
+top_region_index = np.argmax(region_sales)
+
+# Get top region
+top_region = unique_regions[top_region_index]
+
+# Calculate correlation between day of month and sales
+# Note: Assuming day of month is the last two digits of the date
+dates = [int(d['date'][-2:]) for d in data]
+correlation = np.corrcoef(dates, sales)[0, 1]
+
+# Plot bar chart
+plt.bar(unique_regions, region_sales, color='blue')
+plt.xlabel('Region')
+plt.ylabel('Total Sales')
+plt.title('Total Sales by Region')
+plt.show()
+
+# Plot cumulative sales over time
+plt.plot(dates, np.cumsum(sales), color='red')
+plt.xlabel('Day of Month')
+plt.ylabel('Cumulative Sales')
+plt.title('Cumulative Sales over Time')
+plt.show()
+
+# Encode bar chart and cumulative sales chart as base64 PNG strings
+import base64
+import io
+
+# Encode bar chart
+buffer = io.BytesIO()
+plt.savefig(buffer, format='png')
+bar_chart = base64.b64encode(buffer.getvalue()).decode('utf-8')
+
+# Encode cumulative sales chart
+buffer = io.BytesIO()
+plt.savefig(buffer, format='png')
+cumulative_sales_chart = base64.b64encode(buffer.getvalue()).decode('utf-8')
+
+# Return JSON object
+return {
+    'total_sales': total_sales,
+    'top_region': top_region,
+    'day_sales_correlation': correlation,
+    'bar_chart': bar_chart,
+    'median_sales': median_sales,
+    'total_sales_tax': total_sales_tax,
+    'cumulative_sales_chart': cumulative_sales_chart
+}

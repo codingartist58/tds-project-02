@@ -6,6 +6,11 @@ uvicorn utils.main:app --port 8020 --reload
 
 ## curl command
 
+pdf data
+curl "http://localhost:8020/api/" -F "questions.txt=@question.txt" -F "read-pdf.pdf=@sample_table.pdf"
+
+curl "http://localhost:8020/api/" -F "questions.txt=@question.txt" -F "read-pdf.pdf=@read-pdf.pdf"
+
 movies data
 curl -X POST "http://localhost:8020/api/" \
   -F "file1=@questions.txt" \

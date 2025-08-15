@@ -1,4 +1,5 @@
 from datetime import datetime
+import json
 import re
 from typing import Dict, List, Any
 from fastapi import FastAPI, Request
@@ -9,7 +10,7 @@ import shutil
 import csv
 import requests
 from bs4 import BeautifulSoup
-
+import pdfplumber
 
 from utils.ai import process_questions
 
@@ -26,6 +27,8 @@ def extract_urls(text: str) -> List[str]:
     url_pattern = r'https?://\S+'
     return re.findall(url_pattern, text)
 
+
+# NOT BEING USED 
 def scrape_url(url: str):
     try:
         resp = requests.get(url, timeout=10)
@@ -45,13 +48,29 @@ def extract_csv(file_path: str) -> List[Dict[str, Any]]:
             data.append(row)
     return data
 
+def extract_pdf(file_path: str) -> str:
+    "Extract only tables from pdf"
+    all_data = []
+    with pdfplumber.open(file_path) as pdf:
+        for page in pdf.pages:
+            tables = page.extract_tables()
+            for table in tables:
+                if table:
+                    headers = table[0]
+                    for row in table[1:]:
+                        row_dict = {headers[i]: row[i] for i in range(len(headers))}
+                        all_data.append(row_dict)
+    return all_data
+
+        
 def process_incoming_files(saved_files: List[str], questions_text: str) -> Dict[str, Any]:
     """Process all saved files and return structured JSON."""
     extracted_data = {
         #"url_contents": "",
         "urls": [],
         "csvdata": [],
-        "text": ""
+        "text": "",
+        "pdfdata": []
     }
     urls = extract_urls(questions_text) if questions_text else []
     #extracted_data["url_contents"] += content + "\n" if content else 
@@ -72,11 +91,19 @@ def process_incoming_files(saved_files: List[str], questions_text: str) -> Dict[
         # handling csv files
         if file_path_low.endswith(".csv"):
             extracted_data["csvdata"].extend(extract_csv(file_path))
-        elif file_path_low.endswith(".txt") and not file_path_low.endswith("questions.txt"):
+
+        elif file_path_low.endswith(".txt") and not (file_path_low.endswith("questions.txt") or file_path_low.endswith("question.txt")):
             with open(file_path, "r", encoding="utf-8") as f:
                 extracted_data["text"] += f.read() + "\n"
-        elif file_path_low.startswith("image"):
-            image = Image.open
+
+        #handling pdf files
+        elif file_path_low.endswith(".pdf"):
+            pdf_text = extract_pdf(file_path)
+            extracted_data["pdfdata"].append(pdf_text)
+
+            """elif file_path_low.startswith("image"):
+            image = Image.open(file_path)
+            extracted_data["images"].append(image) """
         # Later: Add handlers for images, PDFs, etc.
 
     return extracted_data
@@ -88,36 +115,33 @@ def process_incoming_files(saved_files: List[str], questions_text: str) -> Dict[
 async def analyze_task(request: Request):
     form = await request.form()
 
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    run_directory = os.path.join("runs", f"run_{timestamp}")
+    os.makedirs(run_directory, exist_ok=True)
     questions_text = None
     saved_files = []
-
+    
     for field_name, value in form.items():
         if hasattr(value, "filename") and hasattr(value, "file"):
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            
 
             # Save incoming files with timestamp
             base, ext = os.path.splitext(value.filename)
-            new_filename = f"{base}_{timestamp}{ext}"
+            new_filename = f"{base}{ext}"
 
-            file_path = os.path.join(INCOMING_DIR, new_filename)
+            file_path = os.path.join(run_directory, new_filename)
 
             with open(file_path, "wb") as buffer:
                 shutil.copyfileobj(value.file, buffer)
             saved_files.append(file_path)
 
-            if value.filename == "questions.txt":
+            value.file.seek(0)
+            #buffer.flush()
+
+            if value.filename == "questions.txt" or value.filename == "question.txt":
                 with open(file_path, "r", encoding="utf-8") as f:
                     questions_text = f.read()
-
-
-                # Save questions into /incoming/questions/ with timestamp
-                #timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                questions_copy_path = os.path.join(
-                    QUESTIONS_DIR,
-                    f"questions_{timestamp}.txt"
-                )
-                with open(questions_copy_path, "w", encoding="utf-8") as f:
-                    f.write(questions_text)
+                
 
     if not questions_text:
         return {"error": "questions.txt is required"}
@@ -126,25 +150,33 @@ async def analyze_task(request: Request):
     extracted_data = process_incoming_files(saved_files, questions_text)
     print(f"---[EXTRACTED]Extracted data: {extracted_data}")
 
-    print(f"----------sending llm {questions_text}")
+    #print(f"----------sending llm {questions_text}")
     
+    # write the extracted_data into a file
+    extracted_data_path = os.path.join(
+        run_directory,
+        f"extracted_data.json"
+    )
+    with open(extracted_data_path, "w", encoding="utf-8") as f:
+        json.dump(extracted_data, f)
+
+    return {"The end": "Extraction complete"}
+
     llm_response = process_questions(questions_text, extracted_data)
 
     # Save LLM response in /incoming/questions/ with matching timestamp
     response_path = os.path.join(
-        QUESTIONS_DIR,
-        f"response_{timestamp}.txt"
+        run_directory,
+        f"response.txt"
     )
     with open(response_path, "w", encoding="utf-8") as f:
         f.write(llm_response)
-
 
 
     return {
         "message": "Files saved and processed",
         "llm_response": llm_response
     }
-
 
 if __name__ == "__main__":
     import uvicorn

@@ -1,0 +1,47 @@
+1. To calculate the average score in English subject, we need to first extract the English scores from the available data sources. This can be done by parsing the CSV data or scraping the URLs provided in the context_data. Once we have the English scores, we can use the following formula to calculate the average:
+
+    Average = Sum of all English scores / Total number of English scores
+
+    We can then output the result in the form of a json object with the property name "average_english_score". The code for this can be written as follows:
+
+    {
+        "average_english_score": Average
+    }
+
+2. To calculate the average biology marks of students who scored more than 85 in physics, we need to first extract the biology marks and physics scores from the available data sources. This can be done by parsing the CSV data or scraping the URLs provided in the context_data. Once we have the biology marks and physics scores, we can filter out the students who scored more than 85 in physics and then calculate the average biology marks for those students using the following formula:
+
+    Average = Sum of biology marks for students with physics score > 85 / Total number of students with physics score > 85
+
+    We can then output the result in the form of a json object with the property name "average_biology_marks". The code for this can be written as follows:
+
+    {
+        "average_biology_marks": Average
+    }
+
+    If the user's question requires a chart or graph, we can use matplotlib or plotly to plot a bar graph showing the average biology marks for students with physics score > 85. The code for this can be written as follows:
+
+    import matplotlib.pyplot as plt
+
+    # Extract biology marks and physics scores from data sources
+    biology_marks = # Extract from CSV or scrape from URLs
+    physics_scores = # Extract from CSV or scrape from URLs
+
+    # Filter out students with physics score > 85
+    filtered_biology_marks = [mark for mark, score in zip(biology_marks, physics_scores) if score > 85]
+
+    # Calculate average biology marks
+    average = sum(filtered_biology_marks) / len(filtered_biology_marks)
+
+    # Plot bar graph
+    plt.bar(["Average Biology Marks"], [average], color="green")
+    plt.xlabel("Students with Physics Score > 85")
+    plt.ylabel("Average Biology Marks")
+    plt.title("Average Biology Marks for Students with Physics Score > 85")
+    plt.show()
+
+    We can then output the code block inside a "plot" property in the json object as follows:
+
+    {
+        "average_biology_marks": Average,
+        "plot": "import matplotlib.pyplot as plt\n\n# Extract biology marks and physics scores from data sources\nbiology_marks = # Extract from CSV or scrape from URLs\nphysics_scores = # Extract from CSV or scrape from URLs\n\n# Filter out students with physics score > 85\nfiltered_biology_marks = [mark for mark, score in zip(biology_marks, physics_scores) if score > 85]\n\n# Calculate average biology marks\naverage = sum(filtered_biology_marks) / len(filtered_biology_marks)\n\n# Plot bar graph\nplt.bar([\"Average Biology Marks\"], [average], color=\"green\")\nplt.xlabel(\"Students with Physics Score > 85\")\nplt.ylabel(\"Average Biology Marks\")\nplt.title(\"Average Biology Marks for Students with Physics Score > 85\")\nplt.show()"
+    }
