@@ -29,9 +29,13 @@ def process_questions(questions_text: str, context_data: dict ) -> str:
 
     URLs: If URLs are present in {context_data["urls"]}, scrape their content and use it.
 
-    CSV Data: Parse and use any CSV data in {context_data["csvdata"]} for analysis.
+    CSV Data: Parse and use any CSV data in {context_data["csvdata"]} for analysis if present.
 
-    Other Files: Extract any useful data from other keys in {context_data} supported file types.
+    Images text: Use any text extracted from images in {context_data["images_text"]} for analysis if present.
+
+    PDF Data: Use any tables extracted from PDFs in {context_data["pdfdata"]} for analysis if present.
+
+    text: Use any text extracted from other files in {context_data["text"]} for analysis if present.
 
     Always reason step-by-step, perform necessary calculations, and provide concise, factual answers from the context_data and questions_text only. Response should be in format mentioned in {questions_text}. Always provide the output as a json object with the property name based on the conditions below:
     Python code for plots go under a `plot` property.
