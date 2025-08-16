@@ -130,7 +130,9 @@ def process_incoming_files(saved_files: List[str], questions_text: str) -> Dict[
     return extracted_data
 
 
-
+@app.get("/")
+async def hello():
+    return {"message": "Yipee!"}
 
 @app.post("/api/")
 async def analyze_task(request: Request):
