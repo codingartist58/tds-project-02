@@ -1,4 +1,0 @@
-respond in the form of json
-
-1. Which city is Alice from?
-2. How old is Bob?

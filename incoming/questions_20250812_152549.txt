@@ -1,6 +1,0 @@
-1. How many $2 bn movies were released after 2014?
-2. Which is the earliest film that grossed over $1.5 bn?
-3. when was the movie Star Wars: The Force Awakens released?
-
-Data source:
-https://en.wikipedia.org/wiki/List_of_highest-grossing_films
