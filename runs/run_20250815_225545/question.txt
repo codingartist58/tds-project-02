@@ -1,4 +1,0 @@
-respond in the form of json
-
-1.What's the average score in English subject?
-2. What is the average biology marks of students who scored more than 85 in physics?
