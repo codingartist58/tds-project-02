@@ -15,7 +15,7 @@ import requests
 from bs4 import BeautifulSoup
 import pdfplumber
 
-from utils.ai import process_questions
+from src.utils.ai import process_questions
 
 
 
