@@ -52,7 +52,7 @@ def process_questions(questions_text: str, context_data: dict ) -> str:
     Output the Python code block inside a `plot` property.
 
     Do not hallucinate data — if data is missing, clearly indicate that in a comment in the code.  """,
-        "max_tokens": 2000,
+        "max_tokens": 3500,
         "temperature": 0
     }
 

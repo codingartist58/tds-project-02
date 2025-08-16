@@ -1,6 +1,8 @@
 from datetime import datetime
+import io
 import json
 import re
+from PIL import Image   
 from typing import Dict, List, Any
 from fastapi import FastAPI, Request
 #from starlette.datastructures import UploadFile
@@ -8,6 +10,7 @@ import logging
 import os
 import shutil
 import csv
+import pytesseract
 import requests
 from bs4 import BeautifulSoup
 import pdfplumber
@@ -48,6 +51,21 @@ def extract_csv(file_path: str) -> List[Dict[str, Any]]:
             data.append(row)
     return data
 
+def extract_image(file_bytes: bytes) -> str:
+    """
+    Extract text from an image file using OCR.
+    Args:
+        file_bytes: The raw image bytes.
+    Returns:
+        Extracted text as a string.
+    """
+    try:
+        image = Image.open(io.BytesIO(file_bytes))
+        text = pytesseract.image_to_string(image)
+        return text.strip()
+    except Exception as e:
+        return f"Error extracting text from image: {str(e)}"
+
 def extract_pdf(file_path: str) -> str:
     "Extract only tables from pdf"
     all_data = []
@@ -70,7 +88,8 @@ def process_incoming_files(saved_files: List[str], questions_text: str) -> Dict[
         "urls": [],
         "csvdata": [],
         "text": "",
-        "pdfdata": []
+        "pdfdata": [],
+        "images_text": []
     }
     urls = extract_urls(questions_text) if questions_text else []
     #extracted_data["url_contents"] += content + "\n" if content else 
@@ -96,15 +115,17 @@ def process_incoming_files(saved_files: List[str], questions_text: str) -> Dict[
             with open(file_path, "r", encoding="utf-8") as f:
                 extracted_data["text"] += f.read() + "\n"
 
+        # handling images
+        elif file_path_low.startswith("image") or file_path.lower().endswith((".png", ".jpg", ".jpeg", ".tiff")):
+            with open(file_path, "rb") as f:
+                file_bytes = f.read()
+                text = extract_image(file_bytes)
+                extracted_data["images_text"].append(text)
+
         #handling pdf files
         elif file_path_low.endswith(".pdf"):
             pdf_text = extract_pdf(file_path)
             extracted_data["pdfdata"].append(pdf_text)
-
-            """elif file_path_low.startswith("image"):
-            image = Image.open(file_path)
-            extracted_data["images"].append(image) """
-        # Later: Add handlers for images, PDFs, etc.
 
     return extracted_data
 
@@ -150,8 +171,8 @@ async def analyze_task(request: Request):
     extracted_data = process_incoming_files(saved_files, questions_text)
     print(f"---[EXTRACTED]Extracted data: {extracted_data}")
 
-    #print(f"----------sending llm {questions_text}")
-    
+    #return {"extracted_data": "done!!!"}
+
     # write the extracted_data into a file
     extracted_data_path = os.path.join(
         run_directory,
@@ -160,7 +181,7 @@ async def analyze_task(request: Request):
     with open(extracted_data_path, "w", encoding="utf-8") as f:
         json.dump(extracted_data, f)
 
-    return {"The end": "Extraction complete"}
+    #return {"The end": "Extraction complete"}
 
     llm_response = process_questions(questions_text, extracted_data)
 
