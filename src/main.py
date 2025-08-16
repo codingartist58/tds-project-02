@@ -191,7 +191,7 @@ async def analyze_task(request: Request):
         f"response.txt"
     )
     with open(response_path, "w", encoding="utf-8") as f:
-        f.write(llm_response)
+        f.write(str(llm_response))
 
 
     return {
