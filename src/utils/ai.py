@@ -18,6 +18,10 @@ AIPIPE_BASE_URL = os.getenv("AIPIPE_BASE_URL")
 if not AIPIPE_TOKEN or not AIPIPE_BASE_URL:
     raise ValueError("Missing AIPIPE_TOKEN or AIPIPE_BASE_URL in environment variables")
 
+def clean_json(parsed_response):
+    
+    return parsed_response
+
 def render_plots(json_response, data):
     for key, value in json_response.items():
         if isinstance(value, dict) and "plot" in value:
@@ -180,10 +184,11 @@ Answer the questions using the context data. Follow the exact format specified i
                 "raw_response": ai_response
             }
         
+        # Clean the json response
+        parsed_response = clean_json(parsed_response)
+
         parsed_response = render_plots(parsed_response, context_data)
         # Convert to JSON string for consistency
-
-           
 
         # add model info globally
         #parsed_response["model_used"] = config["model"]
