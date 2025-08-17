@@ -187,8 +187,15 @@ Answer the questions using the context data. Follow the exact format specified i
     {"role": "user", "parts": [system_prompt]},
     {"role": "user", "parts": [user_prompt]}])
         
-        raw_text = response.text.strip()
-        print("--[DEBUG] Raw Gemini response:", raw_text)
+        try:
+            if response.candidates and response.candidates[0].content.parts:
+                raw_text = response.candidates[0].content.parts[0].text.strip()
+            else:
+                raw_text = ""
+        except Exception:
+            raw_text = ""
+        # raw_text = response.text.strip()
+        print("--[DEBUG] Raw Gemini response: ", raw_text)
 
         #clean json
         parsed_response = clean_json(raw_text)

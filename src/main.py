@@ -5,6 +5,7 @@ import re
 from PIL import Image   
 from typing import Dict, List, Any
 from fastapi import FastAPI, Request
+from fastapi.responses import FileResponse
 import logging
 import os
 import shutil
@@ -144,6 +145,25 @@ def process_incoming_files(saved_files: List[str], questions_text: str) -> Dict[
 @app.get("/")
 async def hello():
     return {"message": "Yipee!"}
+
+@app.get("/ddl")
+def download_zip():
+    folder_to_zip = "runs"   # folder you want to zip
+    zip_filename = "runs-archive.zip"
+
+    # remove old zip if exists
+    if os.path.exists(zip_filename):
+        os.remove(zip_filename)
+
+    # create a new zip from the folder
+    shutil.make_archive("archive", "zip", folder_to_zip)
+
+    # return the zip as a downloadable file
+    return FileResponse(
+        path=zip_filename,
+        media_type="application/zip",
+        filename=zip_filename
+    )
 
 @app.post("/api/")
 async def analyze_task(request: Request):
