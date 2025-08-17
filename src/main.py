@@ -190,7 +190,7 @@ async def analyze_task(request: Request):
     extracted_data = process_incoming_files(saved_files, questions_text)
     print(f"---[EXTRACTED]Extracted data: {extracted_data}")
     
-    return {"extracted_data": "done!!!"}
+    #return {"extracted_data": "done!!!"}
 
     # write the extracted_data into a file
     extracted_data_path = os.path.join(
