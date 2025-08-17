@@ -1,5 +1,6 @@
 import base64
 from io import BytesIO
+import io
 import json
 import os
 import matplotlib
@@ -17,45 +18,28 @@ AIPIPE_BASE_URL = os.getenv("AIPIPE_BASE_URL")
 if not AIPIPE_TOKEN or not AIPIPE_BASE_URL:
     raise ValueError("Missing AIPIPE_TOKEN or AIPIPE_BASE_URL in environment variables")
 
-def execute_plot_code_safely(code: str, context_data: dict) -> str:
-    """Execute plot code and return base64 image (your existing function)."""
-    try:
-        # Your existing implementation
-        safe_globals = {
-            '__builtins__': {},
-            'matplotlib': matplotlib,
-            'plt': plt,
-            'pd': pd,
-            'pandas': pd,
-            'json': json,
-            'context_data': context_data
-        }
-        
-        # Add CSV data as DataFrames
-        if context_data.get('csvdata'):
-            for i, csv_content in enumerate(context_data['csvdata']):
-                try:
-                    df = pd.read_csv(BytesIO(csv_content.encode()))
-                    safe_globals[f'df{i}' if i > 0 else 'df'] = df
-                except:
-                    pass
-        
-        exec(code, safe_globals)
-        
-        fig = plt.gcf()
-        if fig.get_axes():
-            buffer = BytesIO()
-            fig.savefig(buffer, format='png', bbox_inches='tight', dpi=150)
-            buffer.seek(0)
-            image_base64 = base64.b64encode(buffer.getvalue()).decode()
-            plt.close(fig)
-            return image_base64
-        else:
-            return "No plot was generated"
+def render_plots(json_response, data):
+    for key, value in json_response.items():
+        if isinstance(value, dict) and "plot" in value:
+            code = value["plot"]
+            try:
+                # Execute code in safe environment
+                local_env = {"df": data.copy(), "plt": plt}
+                exec(code, {}, local_env)
+                
+                # Convert to base64
+                buf = io.BytesIO()
+                plt.savefig(buf, format="png")
+                buf.seek(0)
+                b64_img = base64.b64encode(buf.read()).decode("utf-8")
+                plt.close()
             
-    except Exception as e:
-        plt.close('all')
-        return f"Error executing plot code: {str(e)}"
+            # Replace the plot code with base64 image
+                json_response[key] = b64_img
+            except Exception as e:
+                value["plot_status"] = "failed"
+                value["plot_error"] = str(e)    
+    return json_response
 
 def process_questions(questions_text: str, context_data: dict, model_choice: str = "gpt-4.1") -> str:
     """Send the questions text to AIpipe and return its response."""
@@ -106,14 +90,26 @@ def process_questions(questions_text: str, context_data: dict, model_choice: str
 
     # Streamlined system prompt focused on following user's format
     system_prompt = """You are a data analyst AI. Your task is to: 
-1. Answer the user's questions present in {questions_text} using all available data sources:
-2. Follow the EXACT response format specified in {questions_text}
-3. Generate matplotlib code ONLY if plotting is specifically requested in the questions
-4. Do not show detailed calculations unless explicitly asked
-5. Be concise and direct in your answers
-6. Never hallucinate data - use only what's provided
+1. Answer the user's questions present in {questions_text} using all available data sources.
+2. The {questions_text} has two sections: 
+   - The response format (usually JSON with specific keys).
+   - The actual questions. 
+   Always follow the response format exactly.
+3. If a chart/plot is requested:
+   - Do NOT insert base64 image strings.
+   - Instead, provide matplotlib code under a 'plot' property for the corresponding key.
+     Example:
+       "bar_chart": {
+         "plot": "import matplotlib.pyplot as plt\\nplt.bar([...])"
+       }
+   - Leave the rest of the key unfilled; it will be filled later after the plot is generated.
+4. Only generate matplotlib code if plotting is specifically requested.
+5. Do not show detailed calculations unless explicitly asked.
+6. Be concise and direct in your answers.
+7. Never hallucinate data - use only what's provided.
 
-IMPORTANT: The user's questions will specify the exact format they want. Follow it precisely."""
+IMPORTANT: Always return answers in the exact format requested in {questions_text}."""
+
 
 
     user_prompt = f"""
@@ -184,19 +180,16 @@ Answer the questions using the context data. Follow the exact format specified i
                 "raw_response": ai_response
             }
         
-        # Execute plot code if present
-        if "plot" in parsed_response and parsed_response["plot"]:
-            plot_result = execute_plot_code_safely(parsed_response["plot"], context_data)
-            
-            if plot_result and not plot_result.startswith("Error"):
-                parsed_response["plot_image"] = plot_result
-                parsed_response["plot_status"] = "success"
-            else:
-                parsed_response["plot_status"] = "failed"
-                parsed_response["plot_error"] = plot_result
-        
-        parsed_response["model_used"] = config["model"] 
+        parsed_response = render_plots(parsed_response, context_data)
+        # Convert to JSON string for consistency
+
+           
+
+        # add model info globally
+        #parsed_response["model_used"] = config["model"]
+
         return parsed_response
+
         
     except requests.exceptions.RequestException as e:
         return {

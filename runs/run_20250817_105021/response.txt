@@ -1,0 +1,1 @@
+{'error': "Processing failed: cannot access local variable 'plot_result' where it is not associated with a value", 'status': 'processing_error'}

@@ -1,5 +1,9 @@
 # TDS PROJECT 02
 
+## run main.py
+
+python -m src.main
+
 ## uvicorn command
 
 uvicorn utils.main:app --port 8020 --reload

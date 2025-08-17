@@ -196,10 +196,7 @@ async def analyze_task(request: Request):
         f.write(str(llm_response))
 
 
-    return {
-        "message": "Files saved and processed",
-        "llm_response": llm_response
-    }
+    return llm_response
 
 if __name__ == "__main__":
     import os
