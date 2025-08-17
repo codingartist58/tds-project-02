@@ -108,15 +108,10 @@ def process_incoming_files(saved_files: List[str], questions_text: str) -> Dict[
         "pdfdata": [],
         "images_text": []
     }
+
+    # extract URLs from questions_text
     urls = extract_urls(questions_text) if questions_text else []
-    #extracted_data["url_contents"] += content + "\n" if content else 
-    # If URLs found, scrape them
     
-    """     
-        if len(urls) != 0:
-        for url in urls:
-            content = scrape_url(url)
-            extracted_data["url_contents"] += content + "\n" if content else """
     
     extracted_data["urls"] = urls
 
