@@ -108,15 +108,10 @@ def process_incoming_files(saved_files: List[str], questions_text: str) -> Dict[
         "pdfdata": [],
         "images_text": []
     }
+
+    # extract URLs from questions_text
     urls = extract_urls(questions_text) if questions_text else []
-    #extracted_data["url_contents"] += content + "\n" if content else 
-    # If URLs found, scrape them
     
-    """     
-        if len(urls) != 0:
-        for url in urls:
-            content = scrape_url(url)
-            extracted_data["url_contents"] += content + "\n" if content else """
     
     extracted_data["urls"] = urls
 
@@ -190,7 +185,7 @@ async def analyze_task(request: Request):
     extracted_data = process_incoming_files(saved_files, questions_text)
     print(f"---[EXTRACTED]Extracted data: {extracted_data}")
     
-    return {"extracted_data": "done!!!"}
+    #return {"extracted_data": "done!!!"}
 
     # write the extracted_data into a file
     extracted_data_path = os.path.join(

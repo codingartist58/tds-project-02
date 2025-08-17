@@ -22,34 +22,114 @@ def clean_json(parsed_response):
     
     return parsed_response
 
-def render_plots(json_response, data):
-    for key, value in json_response.items():
-        if isinstance(value, dict) and "plot" in value:
-            code = value["plot"]
-            try:
-                # Execute code in safe environment
-                local_env = {"df": data.copy(), "plt": plt}
-                exec(code, {}, local_env)
-                
-                # Convert to base64
-                buf = io.BytesIO()
-                plt.savefig(buf, format="png")
-                buf.seek(0)
-                b64_img = base64.b64encode(buf.read()).decode("utf-8")
-                plt.close()
-            
-            # Replace the plot code with base64 image
-                json_response[key] = b64_img
-            except Exception as e:
-                json_response[key] = "failed: " + str(e)
+import pandas as pd
+import requests
 
-    return json_response
+# Fetch all HTML tables from a given URL.
+def get_tables_from_url(url: str):
+    """
+    Fetch all HTML tables from a given URL.
+    
+    Args:
+        url (str): The webpage URL containing tables.
+
+    Returns:
+        list[dict]: A list of tables where each table is represented as:
+                    {
+                        "table_index": int,
+                        "data": list[dict]   # rows as dicts
+                    }
+    """
+    try:
+        # verify the URL is reachable
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+
+        # Use pandas to parse tables
+        tables = pd.read_html(response.text)
+
+        results = []
+        for idx, df in enumerate(tables):
+            results.append({
+                "table_index": idx,
+                "data": df.to_dict(orient="records")
+            })
+
+        return results
+
+    except ValueError:
+        # No tables found
+        return []
+    except Exception as e:
+        return {"error": str(e)}
+
+
+def render_plots(json_response, data):
+
+    # if json_response is a Dictionary
+    if isinstance(json_response, dict):
+        for key, value in json_response.items():
+            if isinstance(value, dict) and "plot" in value:
+                code = value["plot"]
+                try:
+                    # Execute code in safe environment
+                    local_env = {"df": data.copy(), "plt": plt}
+                    exec(code, {}, local_env)
+                    
+                    # Convert to base64
+                    buf = io.BytesIO()
+                    plt.savefig(buf, format="png")
+                    buf.seek(0)
+                    b64_img = base64.b64encode(buf.read()).decode("utf-8")
+                    plt.close()
+                
+                # Replace the plot code with base64 image
+                    json_response[key] = b64_img
+                except Exception as e:
+                    json_response[key] = "failed: " + str(e)
+
+        return json_response
+
+    # if json_response is a list
+    elif isinstance(json_response, list):
+        for i in range(len(json_response)):
+            item = json_response[i]
+            if isinstance(item, dict):
+                
+                code = item["plot"]
+                try:
+                    # Execute code in safe environment
+                    local_env = {"df": data.copy(), "plt": plt}
+                    exec(code, {}, local_env)
+                    
+                    # Convert to base64
+                    buf = io.BytesIO()
+                    plt.savefig(buf, format="png")
+                    buf.seek(0)
+                    b64_img = base64.b64encode(buf.read()).decode("utf-8")
+                    plt.close()
+                
+                # Replace the plot code with base64 image
+                    json_response[i] = b64_img
+                except Exception as e:
+                    json_response[i] = "failed: " + str(e)
+
+        return json_response
 
 def process_questions(questions_text: str, context_data: dict, model_choice: str = "gpt-4.1") -> str:
     """Send the questions text to AIpipe and return its response."""
     
     url = f"{AIPIPE_BASE_URL.rstrip('/')}/completions"
 
+    #scrape URLs for context
+    url_contents = []
+    for url in context_data.get("urls", []):
+        content = get_tables_from_url(url)
+        url_contents.append(content)
+    #context_data["url_contents"] = url_contents
+    
+    #print(f'tables from URLs:{url_contents]')
+    
     headers = {
         "Authorization": f"Bearer {AIPIPE_TOKEN}",
         "Content-Type": "application/json"
@@ -123,6 +203,7 @@ CONTEXT DATA:
 - Images: {context_data.get("images_text", [])}
 - PDFs: {context_data.get("pdfdata", [])}
 - Text: {context_data.get("text", [])}
+- Tables from URL Contents: {url_contents}
 
 QUESTIONS: {questions_text}
 
@@ -166,6 +247,7 @@ Answer the questions using the context data. Follow the exact format specified i
         print(f"--[DEBUG] llm response inside try: {response.text}")
         response.raise_for_status()
         
+        # Parse the response
         data = response.json()
         
         # Extract response based on format
@@ -184,6 +266,7 @@ Answer the questions using the context data. Follow the exact format specified i
                 "status": "json_parse_error",
                 "raw_response": ai_response
             }
+        
         
 
         print(f"--[DEBUG] llm response : {parsed_response}")
