@@ -135,10 +135,10 @@ def process_questions(questions_text: str, context_data: dict) -> str:
     
 
     #scrape URLs for context
-    url_contents = []
-    for url in context_data.get("urls", []):
-        content = get_tables_from_url(url)
-        url_contents.append(content)
+    # url_contents = []
+    # for url in context_data.get("urls", []):
+    #     content = get_tables_from_url(url)
+    #     url_contents.append(content)
     
     
 
@@ -173,7 +173,6 @@ CONTEXT DATA:
 - Images: {context_data.get("images_text", [])}
 - PDFs: {context_data.get("pdfdata", [])}
 - Text: {context_data.get("text", [])}
-- Tables from URL Contents: {url_contents}
 
 QUESTIONS: {questions_text}
 
