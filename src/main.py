@@ -1,10 +1,10 @@
-from datetime import datetime
+from datetime import datetime, time
 import io
 import json
 import re
 from PIL import Image   
 from typing import Dict, List, Any
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse
 import logging
 import os
@@ -148,25 +148,39 @@ async def hello():
 
 @app.get("/ddl")
 def download_zip():
+    start_time = time.perf_counter()
     folder_to_zip = "runs"   # folder you want to zip
-    zip_filename = "runs-archive.zip"
+    zip_base = "runs-archive"
+    zip_filename = f"{zip_base}.zip"
 
-    # remove old zip if exists
+    zip_filename = "runs-archive.zip"
+    if not os.path.exists(folder_to_zip) or not os.path.isdir(folder_to_zip):
+        raise HTTPException(status_code=404, detail=f"Folder '{folder_to_zip}' not found")
+
+    # Delete old zip if present
     if os.path.exists(zip_filename):
         os.remove(zip_filename)
 
-    # create a new zip from the folder
-    shutil.make_archive("archive", "zip", folder_to_zip)
+    # Create new zip
+    shutil.make_archive(zip_base, "zip", folder_to_zip)
 
+    # Verify file actually exists now
+    if not os.path.exists(zip_filename):
+        raise HTTPException(status_code=500, detail="Failed to create zip file")
+    process_time = time.perf_counter() - start_time
+    print("---[DEBUG] Process time:", process_time)
     # return the zip as a downloadable file
-    return FileResponse(
+    response = FileResponse(
         path=zip_filename,
         media_type="application/zip",
         filename=zip_filename
     )
+    response.headers["X-Process-Time"] = str(process_time)
+    return response
 
 @app.post("/api/")
 async def analyze_task(request: Request):
+    start_time = time.perf_counter()
     form = await request.form()
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -226,7 +240,8 @@ async def analyze_task(request: Request):
     with open(response_path, "w", encoding="utf-8") as f:
         f.write(str(llm_response))
 
-
+    process_time = time.perf_counter() - start_time
+    print("---[DEBUG] Process time:", process_time)
     return llm_response
 
 if __name__ == "__main__":
