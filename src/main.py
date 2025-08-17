@@ -17,7 +17,9 @@ import pdfplumber
 
 from src.utils.ai import process_questions
 
-
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
@@ -31,25 +33,30 @@ def extract_urls(text: str) -> List[str]:
     return re.findall(url_pattern, text)
 
 
-# NOT BEING USED 
-def scrape_url(url: str):
-    try:
-        resp = requests.get(url, timeout=10)
-        resp.raise_for_status()
-        soup = BeautifulSoup(resp.text, "html.parser")
-        # Extract visible text
-        return soup.get_text(separator="\n", strip=True)
-    except Exception as e:
-        return None
 
 def extract_csv(file_path: str) -> List[Dict[str, Any]]:
     """Read CSV file and return a list of dictionaries."""
-    data = []
-    with open(file_path, newline='', encoding='utf-8') as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            data.append(row)
-    return data
+    try:
+        data = []
+        with open(file_path, newline='', encoding='utf-8') as csvfile:
+            # Try to detect delimiter
+            sample = csvfile.read(1024)
+            csvfile.seek(0)
+            sniffer = csv.Sniffer()
+            delimiter = sniffer.sniff(sample).delimiter
+
+            reader = csv.DictReader(csvfile, delimiter=delimiter)
+            for row in reader:
+                # Clean up whitespace in keys and values
+                cleaned_row = {k.strip(): v.strip() if isinstance(v, str) else v 
+                             for k, v in row.items() if k is not None}
+                data.append(cleaned_row)
+
+        logger.info(f"Successfully extracted {len(data)} rows from CSV: {file_path}")
+        return data
+    except Exception as e:
+        logger.error(f"Error reading CSV file {file_path}: {e}")
+        return []
 
 def extract_image(file_bytes: bytes) -> str:
     """
@@ -61,9 +68,19 @@ def extract_image(file_bytes: bytes) -> str:
     """
     try:
         image = Image.open(io.BytesIO(file_bytes))
-        text = pytesseract.image_to_string(image)
-        return text.strip()
+        
+        # Convert to RGB if necessary (for RGBA, P mode images)
+        if image.mode in ('RGBA', 'P'):
+            image = image.convert('RGB')
+        
+        text = pytesseract.image_to_string(image, config='--psm 6')  # Assume uniform block of text
+        extracted_text = text.strip()
+
+        logger.info(f"OCR extracted {len(extracted_text)} characters from image")
+        return extracted_text if extracted_text else "No text found in image"
+        
     except Exception as e:
+        logger.error(f"Error extracting text from image : {e}")
         return f"Error extracting text from image: {str(e)}"
 
 def extract_pdf(file_path: str) -> str:
@@ -172,8 +189,8 @@ async def analyze_task(request: Request):
     # Process files into JSON
     extracted_data = process_incoming_files(saved_files, questions_text)
     print(f"---[EXTRACTED]Extracted data: {extracted_data}")
-
-    #return {"extracted_data": "done!!!"}
+    
+    return {"extracted_data": "done!!!"}
 
     # write the extracted_data into a file
     extracted_data_path = os.path.join(

@@ -41,8 +41,8 @@ def render_plots(json_response, data):
             # Replace the plot code with base64 image
                 json_response[key] = b64_img
             except Exception as e:
-                value["plot_status"] = "failed"
-                value["plot_error"] = str(e)    
+                json_response[key] = "failed: " + str(e)
+
     return json_response
 
 def process_questions(questions_text: str, context_data: dict, model_choice: str = "gpt-4.1") -> str:
@@ -163,6 +163,7 @@ Answer the questions using the context data. Follow the exact format specified i
 
     try:
         response = requests.post(url, json=payload, headers=headers)
+        print(f"--[DEBUG] llm response inside try: {response.text}")
         response.raise_for_status()
         
         data = response.json()
@@ -184,6 +185,8 @@ Answer the questions using the context data. Follow the exact format specified i
                 "raw_response": ai_response
             }
         
+
+        print(f"--[DEBUG] llm response : {parsed_response}")
         # Clean the json response
         parsed_response = clean_json(parsed_response)
 
