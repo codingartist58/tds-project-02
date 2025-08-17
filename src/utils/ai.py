@@ -3,7 +3,7 @@ from io import BytesIO
 import io
 import json
 import os
-import matplotlib
+import google.generativeai as genai
 from matplotlib import pyplot as plt
 import pandas as pd
 import requests
@@ -12,15 +12,28 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-AIPIPE_TOKEN = os.getenv("AIPIPE_TOKEN")
-AIPIPE_BASE_URL = os.getenv("AIPIPE_BASE_URL")
+# Configure Gemini with API key
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
-if not AIPIPE_TOKEN or not AIPIPE_BASE_URL:
-    raise ValueError("Missing AIPIPE_TOKEN or AIPIPE_BASE_URL in environment variables")
 
-def clean_json(parsed_response):
-    
+
+def clean_json(parsed_response: str):
+    """
+    Clean Gemini output and return dict or list.
+    """
+    if isinstance(parsed_response, str):
+        parsed_response = parsed_response.strip()
+        if parsed_response.startswith("```"):
+            parsed_response = parsed_response.strip("`")
+            if parsed_response.startswith("json"):
+                parsed_response = parsed_response[len("json"):].strip()
+        try:
+            return json.loads(parsed_response)
+        except Exception as e:
+            return {"error": f"Failed to parse JSON: {str(e)}", "raw": parsed_response}
     return parsed_response
+
+
 
 import pandas as pd
 import requests
@@ -116,61 +129,18 @@ def render_plots(json_response, data):
 
         return json_response
 
-def process_questions(questions_text: str, context_data: dict, model_choice: str = "gpt-4.1") -> str:
+def process_questions(questions_text: str, context_data: dict) -> str:
     """Send the questions text to AIpipe and return its response."""
     
-    url = f"{AIPIPE_BASE_URL.rstrip('/')}/completions"
+    
 
     #scrape URLs for context
     url_contents = []
     for url in context_data.get("urls", []):
         content = get_tables_from_url(url)
         url_contents.append(content)
-    #context_data["url_contents"] = url_contents
     
-    #print(f'tables from URLs:{url_contents]')
     
-    headers = {
-        "Authorization": f"Bearer {AIPIPE_TOKEN}",
-        "Content-Type": "application/json"
-    }
-
-    
-    # model configuration
-    model_configs = {
-        "gpt-4.1": {
-            "model": "gpt-4.1",
-            "max_tokens": 4000,
-            "temperature": 0,
-            "use_chat": True
-        },
-        "o4-mini": {
-            "model": "o4-mini", 
-            "max_tokens": 4000,
-            "temperature": 0,
-            "use_chat": True
-        },
-        "gpt-4o": {
-            "model": "gpt-4o",
-            "max_tokens": 4000,
-            "temperature": 0,
-            "use_chat": True
-        },
-        "gpt-3.5-turbo": {  # Fallback option
-            "model": "gpt-3.5-turbo",
-            "max_tokens": 4000,
-            "temperature": 0,
-            "use_chat": True
-        },
-        "gpt-3.5-turbo-instruct": {  # Your current model (legacy)
-            "model": "gpt-3.5-turbo-instruct",
-            "max_tokens": 3500,
-            "temperature": 0,
-            "use_chat": False
-        }
-    }
-
-    config = model_configs.get(model_choice, model_configs["gpt-4.1"])
 
     # Streamlined system prompt focused on following user's format
     system_prompt = """You are a data analyst AI. Your task is to: 
@@ -209,75 +179,21 @@ QUESTIONS: {questions_text}
 
 Answer the questions using the context data. Follow the exact format specified in the questions. If a chart/plot is requested, provide matplotlib code, under a 'plot' property."""
     
-
-    # Prepare payload based on model type
-    if config["use_chat"]:
-        # Chat completion format (for newer models)
-        payload = {
-            "model": config["model"],
-            "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            "max_tokens": config["max_tokens"],
-            "temperature": config["temperature"]
-        }
-        endpoint = "chat/completions"
-    else:
-        # Legacy completion format
-        payload = {
-            "model": config["model"],
-            "prompt": f"{system_prompt}\n\n{user_prompt}",
-            "max_tokens": config["max_tokens"],
-            "temperature": config["temperature"]
-        }
-        endpoint = "completions"
-
-
-    # Update URL for chat completions
-    if config["use_chat"]:
-        url = f"{AIPIPE_BASE_URL.rstrip('/')}/chat/completions"
-    
-    print(f"[DEBUG] Using model: {config['model']}")
-    print(f"[DEBUG] Endpoint: {url}")    
-   
-
     try:
-        response = requests.post(url, json=payload, headers=headers)
-        print(f"--[DEBUG] llm response inside try: {response.text}")
-        response.raise_for_status()
-        
-        # Parse the response
-        data = response.json()
-        
-        # Extract response based on format
-        if config["use_chat"]:
-            ai_response = data["choices"][0]["message"]["content"].strip()
-        else:
-            ai_response = data["choices"][0]["text"].strip()
-        
-        # Parse JSON response
-        try:
-            parsed_response = json.loads(ai_response)
-        except json.JSONDecodeError:
-            # Handle non-JSON responses gracefully
-            parsed_response = {
-                "answer": ai_response,
-                "status": "json_parse_error",
-                "raw_response": ai_response
-            }
-        
-        
+        model = genai.GenerativeModel("gemini-2.5-pro")
 
-        print(f"--[DEBUG] llm response : {parsed_response}")
-        # Clean the json response
-        parsed_response = clean_json(parsed_response)
+        # Call Gemini
+        response = model.generate_content([
+    {"role": "user", "parts": [system_prompt]},
+    {"role": "user", "parts": [user_prompt]}])
+        
+        raw_text = response.text.strip()
+        print("--[DEBUG] Raw Gemini response:", raw_text)
+
+        #clean json
+        parsed_response = clean_json(raw_text)
 
         parsed_response = render_plots(parsed_response, context_data)
-        # Convert to JSON string for consistency
-
-        # add model info globally
-        #parsed_response["model_used"] = config["model"]
 
         return parsed_response
 
