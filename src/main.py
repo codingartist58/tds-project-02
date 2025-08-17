@@ -5,7 +5,6 @@ import re
 from PIL import Image   
 from typing import Dict, List, Any
 from fastapi import FastAPI, Request
-#from starlette.datastructures import UploadFile
 import logging
 import os
 import shutil
