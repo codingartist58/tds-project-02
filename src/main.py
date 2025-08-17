@@ -68,9 +68,19 @@ def extract_image(file_bytes: bytes) -> str:
     """
     try:
         image = Image.open(io.BytesIO(file_bytes))
-        text = pytesseract.image_to_string(image)
-        return text.strip()
+        
+        # Convert to RGB if necessary (for RGBA, P mode images)
+        if image.mode in ('RGBA', 'P'):
+            image = image.convert('RGB')
+        
+        text = pytesseract.image_to_string(image, config='--psm 6')  # Assume uniform block of text
+        extracted_text = text.strip()
+
+        logger.info(f"OCR extracted {len(extracted_text)} characters from image")
+        return extracted_text if extracted_text else "No text found in image"
+        
     except Exception as e:
+        logger.error(f"Error extracting text from image : {e}")
         return f"Error extracting text from image: {str(e)}"
 
 def extract_pdf(file_path: str) -> str:
