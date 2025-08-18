@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt
 import pandas as pd
 import requests
 from dotenv import load_dotenv
-
+from src.utils.logger import write_log
 # Load environment variables from .env file
 load_dotenv()
 
@@ -160,9 +160,19 @@ def process_questions(questions_text: str, context_data: dict) -> str:
 4. Only generate matplotlib code if plotting is specifically requested.
 5. Do not show detailed calculations unless explicitly asked.
 6. Be concise and direct in your answers.
-7. Never hallucinate data - use only what's provided.
 
-IMPORTANT: Always return answers in the exact format requested in {questions_text}."""
+CONTEXT DATA:
+- URLs: {context_data.get("urls", {})}
+- CSV: {context_data.get("csvdata", [])}
+- Images: {context_data.get("images_text", [])}
+- PDFs: {context_data.get("pdfdata", [])}
+- Text: {context_data.get("text", [])}
+
+QUESTIONS: {questions_text}
+
+Answer the questions using the context data. Follow the exact format specified in the questions.
+
+"""
 
 
 
@@ -176,43 +186,52 @@ CONTEXT DATA:
 
 QUESTIONS: {questions_text}
 
-Answer the questions using the context data. Follow the exact format specified in the questions. If a chart/plot is requested, provide matplotlib code, under a 'plot' property."""
+Answer the questions using the context data. Follow the exact format specified in the questions."""
     
-    try:
-        model = genai.GenerativeModel("gemini-2.5-pro")
+    models_to_try = ["gemini-2.5-pro", "gemini-2.5-flash"]
 
-        # Call Gemini
-        response = model.generate_content([
-    {"role": "user", "parts": [system_prompt]},
-    {"role": "user", "parts": [user_prompt]}])
-        
+    for model_name in models_to_try:
         try:
-            if response.candidates and response.candidates[0].content.parts:
-                raw_text = response.candidates[0].content.parts[0].text.strip()
-            else:
-                raw_text = ""
-        except Exception:
-            raw_text = ""
-        # raw_text = response.text.strip()
-        print("--[DEBUG] Raw Gemini response: ", raw_text)
+            model = genai.GenerativeModel(model_name)
 
-        #clean json
-        parsed_response = clean_json(raw_text)
+            # Call Gemini
+            response = model.generate_content(system_prompt+user_prompt)
+            """ response = model.generate_content([
+        {"role": "user", "parts": [system_prompt]},
+        {"role": "user", "parts": [user_prompt]}]) """
 
-        parsed_response = render_plots(parsed_response, context_data)
+            write_log(f"Gemini model {model_name} response  before processing: {response}")
 
-        return parsed_response
+            raw_text = None
+            if response.candidates:
+                candidate = response.candidates[0]
+                finish_reason = getattr(candidate, "finish_reason", None)
 
-        
-    except requests.exceptions.RequestException as e:
-        return {
-            "error": f"API request failed: {str(e)}",
-            "status": "request_error"
-        }
-    except Exception as e:
-        return {
-            "error": f"Processing failed: {str(e)}",
-            "status": "processing_error"
-        }
+                if hasattr(candidate, "content") and hasattr(candidate.content, "parts"):
+                    parts = candidate.content.parts
+                    if parts:
+                        raw_text = parts[0].text.strip()
+
+                if not raw_text:
+                    print(f"--[DEBUG] {model_name} returned no usable text. "
+                          f"finish_reason={finish_reason}")
+
+            if raw_text:
+                print(f"--[DEBUG] Raw Gemini ({model_name}) response:", raw_text)
+                # clean JSON
+                parsed_response = clean_json(raw_text)
+                parsed_response = render_plots(parsed_response, context_data)
+                return parsed_response
+
+        except Exception as e:
+            write_log(f"--[DEBUG] {model_name} failed with error: {str(e)}")
+            continue  # try next model
+
+    # If everything failed
+    return {
+        "error": "Gemini returned no usable response from any model",
+        "status": "processing_error"
+    }
+
 
     
