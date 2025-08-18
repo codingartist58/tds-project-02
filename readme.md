@@ -33,4 +33,6 @@ curl -X POST "http://localhost:8020/api/"   -F "file=@samples/questions.txt"
 
 curl -X POST "http://localhost:8020/api/"   -F "questions=@samples/questions.txt" -F "attachments=@samples/data.csv"
 
+curl "https://web-production-81a7c.up.railway.app/api/" -F "questions.txt=@questions.txt"
 
+curl "https://web-production-81a7c.up.railway.app/api/" -F "questions.txt=@questions.txt" -F "sales-data.csv=@sample-sales.csv"

@@ -15,6 +15,7 @@ import pytesseract
 import requests
 from bs4 import BeautifulSoup
 import pdfplumber
+from src.utils.logger import init_logger, write_log
 
 from src.utils.ai import process_questions
 
@@ -187,6 +188,13 @@ async def analyze_task(request: Request):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     run_directory = os.path.join("runs", f"run_{timestamp}")
     os.makedirs(run_directory, exist_ok=True)
+    
+
+    #log file
+    init_logger(run_directory)
+
+    write_log("=== Starting analysis task ===")
+
     questions_text = None
     saved_files = []
     
