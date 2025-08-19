@@ -176,8 +176,9 @@ Answer the questions using the context data. Follow the exact format specified i
 When writing Python code:
 
 - Always include full import statements for every library used 
-  (e.g., `import pandas as pd`, `import matplotlib.pyplot as plt`, `import networkx as nx`).
+  (e.g., `import pandas as pd`, `import matplotlib.pyplot as plt`, if needed for plot ).
 - Do not assume that `pd`, `plt`, or `nx` are already available in the environment.
+- Use `import networkx as nx` if needed for image generation
 - Every code snippet must be fully self-contained and executable as-is.
 - If you generate plots, ensure the plot is saved into a BytesIO buffer and returned as a base64-encoded PNG string.
 - Do not display plots with plt.show().
