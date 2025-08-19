@@ -9,6 +9,8 @@ python -m src.main
 uvicorn utils.main:app --port 8020 --reload
 
 ## curl command
+network
+$ curl "http://localhost:8000/api/" -F "questions.txt=@question.txt" -F "sales-data.csv=@edges.csv"
 
 pdf data
 curl "http://localhost:8020/api/" -F "questions.txt=@question.txt" -F "read-pdf.pdf=@sample_table.pdf"

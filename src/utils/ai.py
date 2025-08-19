@@ -9,7 +9,7 @@ import pandas as pd
 import requests
 from dotenv import load_dotenv
 from src.utils.logger import write_log
-import networkx
+import networkx as nx
 # Load environment variables from .env file
 load_dotenv()
 
@@ -172,6 +172,16 @@ CONTEXT DATA:
 QUESTIONS: {questions_text}
 
 Answer the questions using the context data. Follow the exact format specified in the questions.
+
+When writing Python code:
+
+- Always include full import statements for every library used 
+  (e.g., `import pandas as pd`, `import matplotlib.pyplot as plt`, `import networkx as nx`).
+- Do not assume that `pd`, `plt`, or `nx` are already available in the environment.
+- Every code snippet must be fully self-contained and executable as-is.
+- If you generate plots, ensure the plot is saved into a BytesIO buffer and returned as a base64-encoded PNG string.
+- Do not display plots with plt.show().
+
 
 """
 
