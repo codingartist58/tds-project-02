@@ -9,6 +9,7 @@ import pandas as pd
 import requests
 from dotenv import load_dotenv
 from src.utils.logger import write_log
+import networkx
 # Load environment variables from .env file
 load_dotenv()
 
@@ -213,11 +214,10 @@ Answer the questions using the context data. Follow the exact format specified i
                         raw_text = parts[0].text.strip()
 
                 if not raw_text:
-                    print(f"--[DEBUG] {model_name} returned no usable text. "
-                          f"finish_reason={finish_reason}")
+                    write_log(f"--[DEBUG] {model_name} returned no usable text. finish_reason={finish_reason}")
 
             if raw_text:
-                print(f"--[DEBUG] Raw Gemini ({model_name}) response:", raw_text)
+                write_log(f"--[DEBUG] Raw Gemini ({model_name}) response: {raw_text}")
                 # clean JSON
                 parsed_response = clean_json(raw_text)
                 parsed_response = render_plots(parsed_response, context_data)
